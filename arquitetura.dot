@@ -1,0 +1,46 @@
+digraph G {
+  rankdir=TB;
+  pad=0.5;
+  nodesep=0.6;
+  ranksep=0.5;
+  labelloc=t;
+  fontname="DejaVu Sans";
+  fontsize=22;
+  label=<<B>Venda de ingressos - Rock in Rio</B><BR/> >;
+
+  node [shape=box, style="rounded,filled", fillcolor=white, fontname="DejaVu Sans", fontsize=13, width=3.2, height=0.8];
+  edge [fontname="DejaVu Sans", fontsize=11, color="#444444"];
+
+  usuario    [label="Usuarios", fillcolor="#eeeeee"];
+  cdn        [label="CDN\n(site estatico, aguenta o pico)", fillcolor="#eaf2fb"];
+  fila       [label="Fila virtual\n(cada um recebe sua posicao)", fillcolor="#fff4e0"];
+  api        [label="API de compra\n(so entra quem foi liberado)", fillcolor="#e8f6ec"];
+  estoque    [label="Redis - estoque\n(reserva o ingresso)", shape=cylinder, fillcolor="#e8f6ec"];
+  pagamento  [label="Pagamento", fillcolor="#e8f6ec"];
+  banco      [label="Banco de dados\n(venda confirmada)", shape=cylinder, fillcolor="#f3ecfa"];
+  email      [label="Envio do ingresso\n(email / QR code)", fillcolor="#f3ecfa"];
+
+  n1 [shape=note, fillcolor="#fffbe6", fontsize=11, width=0, height=0,
+      label="Muitos acessos:\na CDN aguenta o pico e a fila\nlibera as pessoas aos poucos"];
+  n2 [shape=note, fillcolor="#fffbe6", fontsize=11, width=0, height=0,
+      label="Internet lenta:\na posicao eh dada pelo servidor\n(sorteio pra quem chegou antes de abrir),\nnao por quem clica mais rapido"];
+  n3 [shape=note, fillcolor="#fffbe6", fontsize=11, width=0, height=0,
+      label="Nao vender a mais:\no ingresso eh reservado antes de pagar.\nAcabou = esgotado.\nPagamento falhou = ingresso volta"];
+
+  { rank=same; cdn; n1; }
+  { rank=same; fila; n2; }
+  { rank=same; estoque; n3; }
+
+  usuario -> cdn;
+  cdn -> fila;
+  fila -> api [label=" chegou a vez"];
+  api -> estoque [label=" reserva"];
+  estoque -> pagamento [label=" paga em ate 10 min"];
+  pagamento -> banco [label=" aprovado"];
+  banco -> email;
+  pagamento -> estoque [label=" recusado:\n devolve", style=dashed, constraint=false];
+
+  cdn -> n1 [style=dotted, arrowhead=none];
+  fila -> n2 [style=dotted, arrowhead=none];
+  estoque -> n3 [style=dotted, arrowhead=none];
+}
